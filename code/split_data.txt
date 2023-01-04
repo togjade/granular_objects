@@ -1,0 +1,56 @@
+import torch
+import torch.nn.functional as F
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import csv, pdb 
+
+torch.manual_seed(777)
+
+####################################################################################################
+#Datasets
+####################################################################################################
+#file_acc_x = "/home/ykhassanov/projects/tactile_sensors/lump_detection/dataset/squeeze_release_X.csv"
+file_acc_x = "/home/ykhassanov/projects/tactile_sensors/lump_detection/dataset/ed_data_x.csv"
+file_acc_y = "/home/ykhassanov/projects/tactile_sensors/lump_detection/dataset/squeeze_release_Y.csv"
+file_press = "/home/ykhassanov/projects/tactile_sensors/lump_detection/dataset/squeeze_release_P.csv"
+file_label = "/home/ykhassanov/projects/tactile_sensors/lump_detection/dataset/binary_label.csv"
+
+df_acc_x = pd.read_csv(file_acc_x, sep=',', header=None)
+df_acc_y = pd.read_csv(file_acc_y, sep=',', header=None)
+df_press = pd.read_csv(file_press, sep=',', header=None)
+df_label = pd.read_csv(file_label, sep=',', header=None)
+
+#df_all = pd.concat([df_acc_x, df_acc_y, df_press, df_label], axis=1, sort=False)
+#df_all = pd.concat([df_press, df_label], axis=1, sort=False)
+df_all = pd.concat([df_acc_x, df_label], axis=1, sort=False)
+#df_all = pd.concat([df_acc_x, df_acc_y, df_label], axis=1, sort=False)
+
+df_train, df_eval = train_test_split(df_all, test_size=0.2, random_state=777, stratify=df_label.values)
+df_dev, df_test   = train_test_split(df_eval, test_size=0.5, random_state=777, stratify=df_eval.values[:,-1])
+
+
+if False:
+        fft_size = 64
+        #input_size = fft_size
+        train_x = np.fft.fft(df_train.values[:,:-1], fft_size, 1)
+        train_x = np.abs(train_x)
+        train_x = torch.FloatTensor(train_x)
+
+        dev_x = np.fft.fft(df_dev.values[:,:-1], fft_size, 1)
+        dev_x = np.abs(dev_x)
+        dev_x = torch.FloatTensor(dev_x)
+
+        test_x = np.fft.fft(df_test.values[:,:-1], fft_size, 1)
+        test_x = np.abs(test_x)
+        test_x = torch.FloatTensor(test_x)
+
+else:
+        train_x = torch.FloatTensor(df_train.values[:,:-1])
+        dev_x   = torch.FloatTensor(df_dev.values[:,:-1])
+        test_x  = torch.FloatTensor(df_test.values[:,:-1])
+
+train_y = torch.FloatTensor(df_train.values[:,-1])
+dev_y   = torch.FloatTensor(df_dev.values[:,-1])
+test_y  = torch.FloatTensor(df_test.values[:,-1])
